@@ -1,1 +1,4 @@
-Qui vanno inserite le query di esempio
+Qui vanno inserite le query di esempio.
+Creare file query.sql, uno per query, da eseguire con:
+
+docker-compose exec db mysql -u root -p rootpwd mydb < query/email_filter.sql
