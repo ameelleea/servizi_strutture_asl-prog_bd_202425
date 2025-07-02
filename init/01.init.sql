@@ -1,46 +1,96 @@
---Crea lo schema
-
--- REGIONE
 CREATE TABLE IF NOT EXISTS Regione (
-    codice_regione INT PRIMARY KEY,
-    nome VARCHAR(100)
+    CodR INT PRIMARY KEY,
+    Nome VARCHAR(20) NOT NULL
 );
 
--- ASL
+CREATE TABLE IF NOT EXISTS Provincia (
+    siglaP CHAR(2) PRIMARY KEY,
+    nome VARCHAR(20) NOT NULL,
+    codR INT NOT NULL,
+    FOREIGN KEY (codR) REFERENCES Regione(CodR)
+);
+
+CREATE TABLE IF NOT EXISTS Comune (
+    siglaP VARCHAR(2) NOT NULL,
+    CAP INT PRIMARY KEY,
+    nome VARCHAR(20) NOT NULL,
+    FOREIGN KEY (siglaP) REFERENCES Provincia(siglaP)
+);
+
 CREATE TABLE IF NOT EXISTS ASL (
-    codice_asl INT PRIMARY KEY,
-    denominazione VARCHAR(50),
-    indirizzo VARCHAR(100),
-    comune VARCHAR(50),
-    cap VARCHAR(10),
-    sigla_provincia VARCHAR(5),
-    codice_regione INT,
-    FOREIGN KEY (codice_regione) REFERENCES Regione(codice_regione)
+    CodAsl INT,
+    CAP INT,
+    NomeASL VARCHAR(100) NOT NULL,
+    Indirizzo VARCHAR(100) NOT NULL,
+    PRIMARY KEY (CodAsl, CAP)
 );
 
--- POPOLAZIONE
 CREATE TABLE IF NOT EXISTS Popolazione (
-    codice_asl INT PRIMARY KEY,
-    eta_infantile INT,
-    eta_adulta INT,
-    anziani INT,
-    totale INT,
-    FOREIGN KEY (codice_asl) REFERENCES ASL(codice_asl)
+    CodAsl INT,
+    CAP INT,
+    AnnoR INT,
+    RTotali INT,
+    RAdulti INT,
+    RInfanzia INT,
+    RAnziani INT,
+    PRIMARY KEY (CodAsl, CAP, AnnoR)
+    FOREIGN KEY (CodAsl, CAP) REFERENCES ASL(CodAsl, CAP)
 );
 
--- SERVIZI
-CREATE TABLE IF NOT EXISTS Servizio (
-    id_servizio INT PRIMARY KEY,
-    nome VARCHAR(100)
+CREATE TABLE IF NOT EXISTS Prescrizioni (
+    CodAsl INT,
+    CAP INT,
+    AnnoR INT,
+    NumeroRicette INT,
+    ImportoR INT,
+    PRIMARY KEY (CodAsl, CAP, AnnoR),
+    FOREIGN KEY (CodAsl, CAP) REFERENCES ASL(CodAsl, CAP)
 );
 
--- ATTIVITÀ
-CREATE TABLE IF NOT EXISTS Attivita (
-    codice_asl INT,
-    id_servizio INT,
-    anno INT,
-    quantita DECIMAL,
-    PRIMARY KEY (codice_asl, id_servizio, anno),
-    FOREIGN KEY (codice_asl) REFERENCES ASL(codice_asl),
-    FOREIGN KEY (id_servizio) REFERENCES Servizio(id_servizio)
+CREATE TABLE IF NOT EXISTS Personale(
+    CodAsl INT,
+    CAP INT,
+    AnnoR INT NOT NULL,
+    TipoMedico VARCHAR(50) NOT NULL,
+    Numero INT,
+    PRIMARY KEY (CodAsl, CAP, AnnoR),
+    FOREIGN KEY (CodAsl, CAP) REFERENCES ASL(CodAsl, CAP),
+    FOREIGN KEY (TipoMedico) REFERENCES TipoMedico(Id)
+);
+
+CREATE TABLE IF NOT EXISTS Strutture(
+    CodAsl INT,
+    CAP INT,
+    AnnoR INT NOT NULL,
+    TipoStruttura VARCHAR(50) NOT NULL,
+    Quantità INT,
+    PRIMARY KEY (CodAsl, CAP, AnnoR),
+    FOREIGN KEY (CodAsl, CAP) REFERENCES ASL(CodAsl, CAP),
+    FOREIGN KEY (TipoStruttura) REFERENCES TipoStruttura(Id)
+);
+
+CREATE TABLE IF NOT EXISTS Servizi(
+    CodAsl INT,
+    CAP INT,
+    AnnoR INT NOT NULL,
+    TipoServizio VARCHAR(50) NOT NULL, 
+    Quantità INT,
+    PRIMARY KEY (CodAsl, CAP, AnnoR),
+    FOREIGN KEY (CodAsl, CAP) REFERENCES ASL(CodAsl, CAP),
+    FOREIGN KEY (TipoServizio) REFERENCES TipoServizio(Id)
+);
+
+CREATE TABLE IF NOT EXISTS TipoStruttura(
+    id INT PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS TipoMedico(
+    id INT PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS TipoServizio(
+    id INT PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL
 );
