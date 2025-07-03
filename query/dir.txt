@@ -4,162 +4,42 @@ Creare file query.sql, uno per query, da eseguire con:
 docker-compose exec db mysql -u root -p rootpwd mydb < query/email_filter.sql
 
 
-
+anno_riferimento
+codice_regione
+codice_asl
+regione 
+denominazione_asl
+indirizzo_asl
+cap_asl
+comune_asl
+sigla_provincia_asl
+residenti_età_infantile
+ residenti_età_adulta
+ residenti_anziani
+ residenti_totale
+cup_tipo_1
+cup_tipo_2
+dipartimento_prevenzione
+dipartimento_materno_infantile
+dipartimento_salute_mentale
 servizio_trasporto_dialisi
 servizio_adi
 unità_mobile_rianimazione
 ambulanze_emergenza_neonato
+medici
+pedici_indennità_associativa
+totale_scelte
+pediatri
+pediatri_indennità_associativa
+totale_scelte_dei pediatri
+ambulatori_laboratori
+ambulatori_laboratori_convenzionati
+numero_ricette
+importo_ricette_euro
 ADI_casi_trattati
 ADI_casi_trattati_Anziani
 ADI_casi_trattati_Pazienti_Terminali
 
-
--- Popolazione servizi
-CREATE TEMPORARY TABLE TempRawServizi (
-    AnnoR INT NOT NULL,
-    CodAsl INT NOT NULL, 
-    CAP INT NOT NULL,           
-    servizio_trasporto_dialisi INT,
-    servizio_adi INT,
-    unità_mobile_rianimazione INT,
-    ambulanze_emergenza_neonato INT,
-    ADI_casi_trattati INT,
-    ADI_casi_trattati_Anziani INT,
-    ADI_casi_trattati_Pazienti_Terminali INT
-);
-
-LOAD DATA INFILE '/docker-entrypoint-initdb.d/Strutture_e_attività_ASL.csv'
-INTO TABLE TempRawServizi
-FIELDS TERMINATED BY ';'
-ENCLOSED BY '"'
-LINES TERMINATED BY '\n'
-IGNORE 1 ROWS
-(
-    AnnoR,
-    CodAsl,
-    CAP,
-    servizio_trasporto_dialisi
-    servizio_adi
-    unità_mobile_rianimazione
-    ambulanze_emergenza_neonato
-    ADI_casi_trattati
-    ADI_casi_trattati_Anziani
-    ADI_casi_trattati_Pazienti_Terminali
-);
-
-INSERT INTO Servizi (CodAsl, CAP, AnnoR, TipoServizio, Quantità)
-SELECT
-    TRS.CodAsl,
-    TRS.CAP,
-    TRS.AnnoR,
-    TS.Id,
-    TRS.servizio_trasporto_dialisi
-FROM
-    TempRawServizi AS TRS
-JOIN
-    TipoServizio AS TS ON TS.Nome = 'servizio_trasporto_dialisi'
-WHERE
-    TRS.servizio_trasporto_dialisi IS NOT NULL AND TRS.servizio_trasporto_dialisi >= 0 -- Inserisci solo se la Quantità è valida
-ON DUPLICATE KEY UPDATE
-    Quantità = VALUES(Quantità);
-
-INSERT INTO Servizi (CodAsl, CAP, AnnoR, TipoServizio, Quantità)
-SELECT
-    TRS.CodAsl,
-    TRS.CAP,
-    TRS.AnnoR,
-    TS.Id,
-    TRS.servizio_adi
-FROM
-    TempRawServizi AS TRS
-JOIN
-    TipoServizio AS TS ON TS.Nome = 'servizio_adi'
-WHERE
-    TRS.servizio_adi IS NOT NULL AND TRS.servizio_adi >= 0
-ON DUPLICATE KEY UPDATE
-    Quantità = VALUES(Quantità);
-
-INSERT INTO Servizi (CodAsl, CAP, AnnoR, TipoServizio, Quantità)
-SELECT
-    TRS.CodAsl,
-    TRS.CAP,
-    TRS.AnnoR,
-    TS.Id,
-    TRS.unità_mobile_rianimazione
-FROM
-    TempRawServizi AS TRS
-JOIN
-    TipoServizio AS TS ON TS.Nome = 'unità_mobile_rianimazione'
-WHERE
-    TRS.unità_mobile_rianimazione IS NOT NULL AND TRS.unità_mobile_rianimazione >= 0
-ON DUPLICATE KEY UPDATE
-    Quantità = VALUES(Quantità);
-
-INSERT INTO Servizi (CodAsl, CAP, AnnoR, TipoServizio, Quantità)
-SELECT
-    TRS.CodAsl,
-    TRS.CAP,
-    TRS.AnnoR,
-    TS.Id,
-    TRS.ambulanze_emergenza_neonato
-FROM
-    TempRawServizi AS TRS
-JOIN
-    TipoServizio AS TS ON TS.Nome = 'ambulanze_emergenza_neonato'
-WHERE
-    TRS.ambulanze_emergenza_neonato IS NOT NULL AND TRS.ambulanze_emergenza_neonato >= 0
-ON DUPLICATE KEY UPDATE
-    Quantità = VALUES(Quantità);
-
-INSERT INTO Servizi (CodAsl, CAP, AnnoR, TipoServizio, Quantità)
-SELECT
-    TRS.CodAsl,
-    TRS.CAP,
-    TRS.AnnoR,
-    TS.Id,
-    TRS.ADI_casi_trattati
-FROM
-    TempRawServizi AS TRS
-JOIN
-    TipoServizio AS TS ON TS.Nome = 'ADI_casi_trattati'
-WHERE
-    TRS.ADI_casi_trattati IS NOT NULL AND TRS.ADI_casi_trattati >= 0
-ON DUPLICATE KEY UPDATE
-    Quantità = VALUES(Quantità);
-
-INSERT INTO Servizi (CodAsl, CAP, AnnoR, TipoServizio, Quantità)
-SELECT
-    TRS.CodAsl,
-    TRS.CAP,
-    TRS.AnnoR,
-    TS.Id,
-    TRS.ADI_casi_trattati_Anziani
-FROM
-    TempRawServizi AS TRS
-JOIN
-    TipoServizio AS TS ON TS.Nome = 'ADI_casi_trattati_Anziani'
-WHERE
-    TRS.ADI_casi_trattati_Anziani IS NOT NULL AND TRS.ADI_casi_trattati_Anziani >= 0
-ON DUPLICATE KEY UPDATE
-    Quantità = VALUES(Quantità);
-
-INSERT INTO Servizi (CodAsl, CAP, AnnoR, TipoServizio, Quantità)
-SELECT
-    TRS.CodAsl,
-    TRS.CAP,
-    TRS.AnnoR,
-    TS.Id,
-    TRS.ADI_casi_trattati_Pazienti_Terminali
-FROM
-    TempRawServizi AS TRS
-JOIN
-    TipoServizio AS TS ON TS.Nome = 'ADI_casi_trattati_Pazienti_Terminali'
-WHERE
-    TRS.ADI_casi_trattati_Pazienti_Terminali IS NOT NULL AND TRS.ADI_casi_trattati_Pazienti_Terminali >= 0
-ON DUPLICATE KEY UPDATE
-    Quantità = VALUES(Quantità);
-
-DROP TEMPORARY TABLE TempRawServizi;
 
 
 

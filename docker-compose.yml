@@ -14,4 +14,6 @@ services:
       - "3306:3306"
     volumes:
       - ./init:/docker-entrypoint-initdb.d
+      - ./conf.d:/etc/mysql/conf.d/ 
+    command: --local-infile=1 
 

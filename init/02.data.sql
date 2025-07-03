@@ -1,133 +1,142 @@
 -- Abilita l'importazione da CSV
 SET GLOBAL local_infile=1;
 
+-- Preprocessamento CSV
+CREATE TABLE RawCSVData (
+    anno_riferimento VARCHAR(255),
+    codice_regione VARCHAR(255),
+    codice_asl VARCHAR(255),
+    regione VARCHAR(255),
+    denominazione_asl VARCHAR(255),
+    indirizzo_asl VARCHAR(255),
+    cap_asl VARCHAR(255),
+    comune_asl VARCHAR(255),
+    sigla_provincia_asl VARCHAR(255),
+    `residenti_età_infantile` VARCHAR(255), 
+    `residenti_età_adulta` VARCHAR(255),    
+    `residenti_anziani` VARCHAR(255),       
+    `residenti_totale` VARCHAR(255),        
+    cup_tipo_1 VARCHAR(255),
+    cup_tipo_2 VARCHAR(255),
+    dipartimento_prevenzione VARCHAR(255),
+    dipartimento_materno_infantile VARCHAR(255),
+    dipartimento_salute_mentale VARCHAR(255),
+    servizio_trasporto_dialisi VARCHAR(255),
+    servizio_adi VARCHAR(255),
+    `unità_mobile_rianimazione` VARCHAR(255), 
+    `ambulanze_emergenza_neonato` VARCHAR(255), 
+    medici VARCHAR(255),
+    `pedici_indennità_associativa` VARCHAR(255), 
+    `totale_scelte` VARCHAR(255),             
+    pediatri VARCHAR(255),
+    `pediatri_indennità_associativa` VARCHAR(255), 
+    `totale_scelte_dei pediatri` VARCHAR(255),
+    ambulatori_laboratori VARCHAR(255),
+    ambulatori_laboratori_convenzionati VARCHAR(255),
+    numero_ricette VARCHAR(255),
+    `importo_ricette_euro` VARCHAR(255),      
+    `ADI_casi_trattati` VARCHAR(255),         
+    `ADI_casi_trattati_Anziani` VARCHAR(255), 
+    `ADI_casi_trattati_Pazienti_Terminali` VARCHAR(255) 
+);
 
--- Carica i dati da file CSV
--- Regione
 LOAD DATA INFILE '/docker-entrypoint-initdb.d/Strutture_e_attività_ASL.csv'
-INTO TABLE Regione
+IGNORE
+INTO TABLE RawCSVData
 FIELDS TERMINATED BY ';'
 ENCLOSED BY '"'
 LINES TERMINATED BY '\n'
-IGNORE 1 ROWS
-(
-    @csv_codice_regione,     
-    @csv_regione,
-)
-SET
-    CodR = @csv_codice_regione, 
-    CAP = @csv_regione;
+IGNORE 1 ROWS;
+
+-- Regione
+INSERT INTO Regione (CodR, Nome)
+SELECT
+    CAST(NULLIF(TRIM(codice_regione), '') AS UNSIGNED) AS CodR_Converted,
+    regione
+FROM
+    RawCSVData
+WHERE
+    TRIM(codice_regione) IS NOT NULL           
+    AND TRIM(codice_regione) != ''             
+    AND TRIM(codice_regione) REGEXP '^[0-9]+$'
+ON DUPLICATE KEY UPDATE
+    Nome = VALUES(Nome);
 
 -- Provincia
+CREATE TEMPORARY TABLE TempProvinceNomi (
+    siglaP CHAR(2) PRIMARY KEY,
+    nome VARCHAR(20) NOT NULL
+);
+
 LOAD DATA INFILE '/docker-entrypoint-initdb.d/province_italiane.csv'
-INTO TABLE Provincia
+IGNORE
+INTO TABLE TempProvinceNomi
 FIELDS TERMINATED BY ','
 ENCLOSED BY '"'
 LINES TERMINATED BY '\n'
 IGNORE 1 ROWS
 (
-    @csv_Sigla,     
-    @csv_Provincia,
+    @csv_Provincia, 
+    @csv_Sigla   
 )
 SET
-    siglaP = @csv_Sigla, 
+    siglaP = @csv_Sigla,
     nome = @csv_Provincia;
 
-LOAD DATA INFILE '/docker-entrypoint-initdb.d/Strutture_e_attività_ASL.csv'
-INTO TABLE Provincia
-FIELDS TERMINATED BY ','
-ENCLOSED BY '"'
-LINES TERMINATED BY '\n'
-IGNORE 1 ROWS
-(
-    @csv_Sigla,     
-    @csv_Provincia,
-)
-SET
-    siglaP = @csv_Sigla, 
-    nome = @csv_Provincia;
+INSERT INTO Provincia (siglaP, nome, codR)
+SELECT DISTINCT T1.sigla_provincia_asl, T2.nome, T1.codice_regione
+FROM RawCSVData AS T1
+JOIN TempProvinceNomi AS T2 ON T1.sigla_provincia_asl = T2.SiglaP
+ON DUPLICATE KEY UPDATE nome = VALUES(nome), codR = VALUES(codR);
+
+DROP TEMPORARY TABLE TempProvinceNomi;
 
 -- Comune
-LOAD DATA INFILE '/docker-entrypoint-initdb.d/Strutture_e_attività_ASL.csv'
-INTO TABLE Comune
-FIELDS TERMINATED BY ';'      
-ENCLOSED BY '"'               
-LINES TERMINATED BY '\n'      
-IGNORE 1 ROWS                 
-(
-    @csv_sigla_provincia_asl,     
-    @csv_cap_asl,
-    @csv_comune_asl
-)
-SET
-    siglaP = @csv_sigla_provincia_asl, 
-    CAP = @csv_cap_asl,
-    nome = @csv_comune_asl;
+INSERT INTO Comune (siglaP, CAP, nome)
+SELECT DISTINCT T1.sigla_provincia_asl, T1.cap_asl, T1.comune_asl
+FROM RawCSVData AS T1
+WHERE
+    TRIM(cap_asl) IS NOT NULL           
+    AND TRIM(cap_asl) != ''             
+    AND TRIM(cap_asl) REGEXP '^[0-9]+$';
 
 -- ASL
-LOAD DATA INFILE '/docker-entrypoint-initdb.d/Strutture_e_attività_ASL.csv'
-INTO TABLE ASL
-FIELDS TERMINATED BY ';'
-ENCLOSED BY '"'
-LINES TERMINATED BY '\n'
-IGNORE 1 ROWS
-(
-    @csv_codice_asl,     
-    @csv_cap_asl,
-    @csv_denominazione_asl
-    @csv_indirizzo_asl
-)
-SET
-   CodAsl = @csv_codice_asl,     
-   CAP = @csv_cap_asl,
-   NomeASL = @csv_denominazione_asl
-   Indirizzo = @csv_indirizzo_asl;
+INSERT INTO ASL (CodAsl, CAP, NomeAsl, Indirizzo)
+SELECT DISTINCT T1.codice_asl, T1.cap_asl, T1.denominazione_asl, T1.indirizzo_asl
+FROM RawCSVData AS T1
+WHERE
+    TRIM(cap_asl) IS NOT NULL           
+    AND TRIM(cap_asl) != ''             
+    AND TRIM(cap_asl) REGEXP '^[0-9]+$'
+    AND TRIM(codice_asl) IS NOT NULL           
+    AND TRIM(codice_asl) != ''             
+    AND TRIM(codice_asl) REGEXP '^[0-9]+$';
 
 -- Popolazione
-LOAD DATA INFILE '/docker-entrypoint-initdb.d/Strutture_e_attività_ASL.csv'
-INTO TABLE Popolazione
-FIELDS TERMINATED BY ';'
-ENCLOSED BY '"'
-LINES TERMINATED BY '\n'
-IGNORE 1 ROWS
-(
-    @csv_anno_riferimento
-    @csv_codice_asl
-    @csv_cap_asl
-    @csv_residenti_età_infantile
-    @csv_residenti_età_adulta
-    @csv_residenti_anziani
-)
-SET
-    CodAsl = @csv_codice_asl,
-    CAP = @csv_cap_asl,
-    AnnoR = @csv_anno_riferimento,
-    RAdulti = @csv_residenti_età_adulta,
-    RInfanzia = @csv_residenti_età_infantile,
-    RAnziani = @csv_residenti_anziani;
+INSERT INTO Popolazione (CodAsl, CAP, AnnoR, RAdulti, RInfanzia, RAnziani)
+SELECT DISTINCT  R.codice_asl, R.cap_asl, R.anno_riferimento, R.`residenti_età_adulta`, R.`residenti_età_infantile`, R.`residenti_anziani` 
+FROM RawCSVData AS R
+WHERE
+    TRIM(cap_asl) IS NOT NULL           
+    AND TRIM(cap_asl) != ''             
+    AND TRIM(cap_asl) REGEXP '^[0-9]+$'
+    AND TRIM(codice_asl) IS NOT NULL           
+    AND TRIM(codice_asl) != ''             
+    AND TRIM(codice_asl) REGEXP '^[0-9]+$';
 
---Prescrizioni
-LOAD DATA INFILE '/docker-entrypoint-initdb.d/Strutture_e_attività_ASL.csv'
-INTO TABLE Prescrizioni
-FIELDS TERMINATED BY ';'
-ENCLOSED BY '"'
-LINES TERMINATED BY '\n'
-IGNORE 1 ROWS
-(
-    @csv_anno_riferimento
-    @csv_codice_asl
-    @csv_cap_asl
-    @csv_numero_ricette
-    @csv_importo_ricette_euro
-)
-SET
-    CodAsl = @csv_codice_asl,
-    CAP = @csv_cap_asl,
-    AnnoR = @csv_anno_riferimento,
-    NumeroRicette = @csv_numero_ricette
-    ImportoR = @csv_importo_ricette_euro;
+-- Prescrizioni
+INSERT INTO Prescrizioni (CodAsl, CAP, AnnoR, NumeroRicette, ImportoR)
+SELECT DISTINCT R.codice_asl, R.cap_asl, R.anno_riferimento, R.numero_ricette, R.importo_ricette_euro
+FROM RawCSVData AS R
+WHERE
+    TRIM(cap_asl) IS NOT NULL           
+    AND TRIM(cap_asl) != ''             
+    AND TRIM(cap_asl) REGEXP '^[0-9]+$'
+    AND TRIM(codice_asl) IS NOT NULL           
+    AND TRIM(codice_asl) != ''             
+    AND TRIM(codice_asl) REGEXP '^[0-9]+$';
 
---Tipi strutture
+-- Tipi strutture
 INSERT INTO TipoStruttura (id, nome) VALUES
 (1, "Centro Unificato di Prenotazione Tipo 1"),
 (2, "Centro Unificato di Prenotazione Tipo 2"),
@@ -156,425 +165,185 @@ INSERT INTO TipoMedico (id, nome) VALUES
 (5, "Pediatri con indennità per attività in forma associativa"),
 (6, "Totale scelte per classe di scelte dei pediatri");
 
+
 -- Popolazione strutture
-CREATE TEMPORARY TABLE TempRawStrutture (
-    AnnoR INT NOT NULL,
-    CodAsl INT NOT NULL, 
-    CAP INT NOT NULL,           
-    cup_tipo_1 INT,
-    cup_tipo_2 INT,
-    dipartimento_prevenzione INT,
-    dipartimento_materno_infantile INT,
-    dipartimento_salute_mentale INT,
-    ambulatori_laboratori INT,
-    ambulatori_laboratori_convenzionati INT
-);
-
-LOAD DATA INFILE '/docker-entrypoint-initdb.d/Strutture_e_attività_ASL.csv'
-INTO TABLE TempRawStrutture
-FIELDS TERMINATED BY ';'
-ENCLOSED BY '"'
-LINES TERMINATED BY '\n'
-IGNORE 1 ROWS
-(
-    AnnoR,
-    CodAsl,
-    CAP,
-    cup_tipo_1,
-    cup_tipo_2,
-    dipartimento_prevenzione,
-    dipartimento_materno_infantile,
-    dipartimento_salute_mentale,
-    ambulatori_laboratori,
-    ambulatori_laboratori_convenzionati
-);
-
+-- Inserimento per cup_tipo_1
 INSERT INTO Strutture (CodAsl, CAP, AnnoR, TipoStruttura, Quantità)
-SELECT
-    TRS.CodAsl,
-    TRS.CAP,
-    TRS.AnnoR,
-    TS.Id,
-    TRS.cup_tipo_1
-FROM
-    TempRawStrutture AS TRS
-JOIN
-    TipoStruttura AS TS ON TS.Nome = 'cup_tipo_1'
-WHERE
-    TRS.cup_tipo_1 IS NOT NULL AND TRS.cup_tipo_1 >= 0 -- Inserisci solo se la quantità è valida
-ON DUPLICATE KEY UPDATE
-    Quantità = VALUES(Quantità);
+SELECT R.codice_asl, R.cap_asl, R.anno_riferimento, TS.id, R.cup_tipo_1
+FROM RawCSVData AS R
+JOIN TipoStruttura AS TS ON TS.nome = 'Centro Unificato di Prenotazione Tipo 1'
+WHERE R.cup_tipo_1 IS NOT NULL AND R.cup_tipo_1 != '' AND R.cup_tipo_1 REGEXP '^[0-9]+$'
+ON DUPLICATE KEY UPDATE Quantità = VALUES(Quantità);
 
+
+-- Inserimento per cup_tipo_2
 INSERT INTO Strutture (CodAsl, CAP, AnnoR, TipoStruttura, Quantità)
-SELECT
-    TRS.CodAsl,
-    TRS.CAP,
-    TRS.AnnoR,
-    TS.Id,
-    TRS.cup_tipo_2
-FROM
-    TempRawStrutture AS TRS
-JOIN
-    TipoStruttura AS TS ON TS.Nome = 'cup_tipo_2'
-WHERE
-    TRS.cup_tipo_2 IS NOT NULL AND TRS.cup_tipo_2 >= 0
-ON DUPLICATE KEY UPDATE
-    Quantità = VALUES(Quantità);
+SELECT R.codice_asl, R.cap_asl, R.anno_riferimento, TS.id, R.cup_tipo_2
+FROM RawCSVData AS R
+JOIN TipoStruttura AS TS ON TS.nome = 'Centro Unificato di Prenotazione Tipo 2'
+WHERE R.cup_tipo_2 IS NOT NULL AND R.cup_tipo_2 != '' AND R.cup_tipo_2 REGEXP '^[0-9]+$'
+ON DUPLICATE KEY UPDATE Quantità = VALUES(Quantità);
 
+
+-- Inserimento per dipartimento_prevenzione
 INSERT INTO Strutture (CodAsl, CAP, AnnoR, TipoStruttura, Quantità)
-SELECT
-    TRS.CodAsl,
-    TRS.CAP,
-    TRS.AnnoR,
-    TS.Id,
-    TRS.dipartimento_prevenzione
-FROM
-    TempRawStrutture AS TRS
-JOIN
-    TipoStruttura AS TS ON TS.Nome = 'dipartimento_prevenzione'
-WHERE
-    TRS.dipartimento_prevenzione IS NOT NULL AND TRS.dipartimento_prevenzione >= 0
-ON DUPLICATE KEY UPDATE
-    Quantità = VALUES(Quantità);
+SELECT R.codice_asl, R.cap_asl, R.anno_riferimento, TS.id, R.dipartimento_prevenzione
+FROM RawCSVData AS R
+JOIN TipoStruttura AS TS ON TS.nome = 'Dipartimento di Prevenzione'
+WHERE R.dipartimento_prevenzione IS NOT NULL AND R.dipartimento_prevenzione != '' AND R.dipartimento_prevenzione REGEXP '^[0-9]+$'
+ON DUPLICATE KEY UPDATE Quantità = VALUES(Quantità);
 
+
+-- Inserimento per dipartimento_materno_infantile
 INSERT INTO Strutture (CodAsl, CAP, AnnoR, TipoStruttura, Quantità)
-SELECT
-    TRS.CodAsl,
-    TRS.CAP,
-    TRS.AnnoR,
-    TS.Id,
-    TRS.dipartimento_materno_infantile
-FROM
-    TempRawStrutture AS TRS
-JOIN
-    TipoStruttura AS TS ON TS.Nome = 'dipartimento_materno_infantile'
-WHERE
-    TRS.dipartimento_materno_infantile IS NOT NULL AND TRS.dipartimento_materno_infantile >= 0
-ON DUPLICATE KEY UPDATE
-    Quantità = VALUES(Quantità);
+SELECT R.codice_asl, R.cap_asl, R.anno_riferimento, TS.id, R.dipartimento_materno_infantile
+FROM RawCSVData AS R
+JOIN TipoStruttura AS TS ON TS.nome = 'Dipartimento Materno-Infantile'
+WHERE R.dipartimento_materno_infantile IS NOT NULL AND R.dipartimento_materno_infantile != '' AND R.dipartimento_materno_infantile REGEXP '^[0-9]+$'
+ON DUPLICATE KEY UPDATE Quantità = VALUES(Quantità);
 
+
+-- Inserimento per dipartimento_salute_mentale
 INSERT INTO Strutture (CodAsl, CAP, AnnoR, TipoStruttura, Quantità)
-SELECT
-    TRS.CodAsl,
-    TRS.CAP,
-    TRS.AnnoR,
-    TS.Id,
-    TRS.dipartimento_salute_mentale
-FROM
-    TempRawStrutture AS TRS
-JOIN
-    TipoStruttura AS TS ON TS.Nome = 'dipartimento_salute_mentale'
-WHERE
-    TRS.dipartimento_salute_mentale IS NOT NULL AND TRS.dipartimento_salute_mentale >= 0
-ON DUPLICATE KEY UPDATE
-    Quantità = VALUES(Quantità);
+SELECT R.codice_asl, R.cap_asl, R.anno_riferimento, TS.id, R.dipartimento_salute_mentale
+FROM RawCSVData AS R
+JOIN TipoStruttura AS TS ON TS.nome = 'Dipartimento di Salute Mentale'
+WHERE R.dipartimento_salute_mentale IS NOT NULL AND R.dipartimento_salute_mentale != '' AND R.dipartimento_salute_mentale REGEXP '^[0-9]+$'
+ON DUPLICATE KEY UPDATE Quantità = VALUES(Quantità);
 
+
+-- Inserimento per ambulatori_laboratori
 INSERT INTO Strutture (CodAsl, CAP, AnnoR, TipoStruttura, Quantità)
-SELECT
-    TRS.CodAsl,
-    TRS.CAP,
-    TRS.AnnoR,
-    TS.Id,
-    TRS.ambulatori_laboratori
-FROM
-    TempRawStrutture AS TRS
-JOIN
-    TipoStruttura AS TS ON TS.Nome = 'ambulatori_laboratori'
-WHERE
-    TRS.ambulatori_laboratori IS NOT NULL AND TRS.ambulatori_laboratori >= 0
-ON DUPLICATE KEY UPDATE
-    Quantità = VALUES(Quantità);
+SELECT R.codice_asl, R.cap_asl, R.anno_riferimento, TS.id, R.ambulatori_laboratori
+FROM RawCSVData AS R
+JOIN TipoStruttura AS TS ON TS.nome = 'Ambulatori e Laboratori'
+WHERE R.ambulatori_laboratori IS NOT NULL AND R.ambulatori_laboratori != '' AND R.ambulatori_laboratori REGEXP '^[0-9]+$'
+ON DUPLICATE KEY UPDATE Quantità = VALUES(Quantità);
 
+
+-- Inserimento per ambulatori_laboratori_convenzionati
 INSERT INTO Strutture (CodAsl, CAP, AnnoR, TipoStruttura, Quantità)
-SELECT
-    TRS.CodAsl,
-    TRS.CAP,
-    TRS.AnnoR,
-    TS.Id,
-    TRS.ambulatori_laboratori_convenzionati
-FROM
-    TempRawStrutture AS TRS
-JOIN
-    TipoStruttura AS TS ON TS.Nome = 'ambulatori_laboratori_convenzionati'
-WHERE
-    TRS.ambulatori_laboratori_convenzionati IS NOT NULL AND TRS.ambulatori_laboratori_convenzionati >= 0
-ON DUPLICATE KEY UPDATE
-    Quantità = VALUES(Quantità);
-
-DROP TEMPORARY TABLE TempRawStrutture;
+SELECT R.codice_asl, R.cap_asl, R.anno_riferimento, TS.id, R.ambulatori_laboratori_convenzionati
+FROM RawCSVData AS R
+JOIN TipoStruttura AS TS ON TS.nome = 'Ambulatori e Laboratori convenzionati'
+WHERE R.ambulatori_laboratori_convenzionati IS NOT NULL AND R.ambulatori_laboratori_convenzionati != '' AND R.ambulatori_laboratori_convenzionati REGEXP '^[0-9]+$'
+ON DUPLICATE KEY UPDATE Quantità = VALUES(Quantità);
 
 -- Popolazione personale
-CREATE TEMPORARY TABLE TempRawPersonale (
-    AnnoR INT NOT NULL,
-    CodAsl INT NOT NULL, 
-    CAP INT NOT NULL,           
-    medici INT,
-    pedici_indennità_associativa INT,
-    totale_scelte INT,
-    pediatri INT,
-    pediatri_indennità_associativa INT,
-    totale_scelte_dei pediatri INT
-);
+-- Inserimento per medici (Medici)
+INSERT INTO Personale (CodAsl, CAP, AnnoR, TipoMedico, Quantità)
+SELECT R.codice_asl, R.cap_asl, R.anno_riferimento, TM.id, R.`medici`
+FROM RawCSVData AS R
+JOIN TipoMedico AS TM ON TM.nome = 'Medici'
+WHERE R.`medici` IS NOT NULL AND R.`medici` != '' AND R.`medici` REGEXP '^[0-9]+$'
+ON DUPLICATE KEY UPDATE Quantità = VALUES(Quantità);
 
-LOAD DATA INFILE '/docker-entrypoint-initdb.d/Strutture_e_attività_ASL.csv'
-INTO TABLE TempRawPersonale
-FIELDS TERMINATED BY ';'
-ENCLOSED BY '"'
-LINES TERMINATED BY '\n'
-IGNORE 1 ROWS
-(
-    AnnoR,
-    CodAsl,
-    CAP,
-    medici
-    medici_indennità_associativa
-    totale_scelte
-    pediatri
-    pediatri_indennità_associativa
-    totale_scelte_dei pediatri
-);
 
-INSERT INTO Personale (CodAsl, CAP, AnnoR, TipoMedico, Numero)
-SELECT
-    TRP.CodAsl,
-    TRP.CAP,
-    TRP.AnnoR,
-    TM.Id,
-    TRP.medici
-FROM
-    TempRawPersonale AS TRP
-JOIN
-    TipoMedico AS TM ON TM.Nome = 'medici'
-WHERE
-    TRP.medici IS NOT NULL AND TRP.medici >= 0 -- Inserisci solo se la Numero è valida
-ON DUPLICATE KEY UPDATE
-    Numero = VALUES(Numero);
+-- Inserimento per pedici_indennità_associativa (Medici con indennità per attività in forma associativa)
+INSERT INTO Personale (CodAsl, CAP, AnnoR, TipoMedico, Quantità)
+SELECT R.codice_asl, R.cap_asl, R.anno_riferimento, TM.id, R.`pedici_indennità_associativa`
+FROM RawCSVData AS R
+JOIN TipoMedico AS TM ON TM.nome = 'Medici con indennità per attività in forma associativa'
+WHERE R.`pedici_indennità_associativa` IS NOT NULL AND R.`pedici_indennità_associativa` != '' AND R.`pedici_indennità_associativa` REGEXP '^[0-9]+$'
+ON DUPLICATE KEY UPDATE Quantità = VALUES(Quantità);
 
-INSERT INTO Personale (CodAsl, CAP, AnnoR, TipoMedico, Numero)
-SELECT
-    TRP.CodAsl,
-    TRP.CAP,
-    TRP.AnnoR,
-    TM.Id,
-    TRP.medici_indennità_associativa
-FROM
-    TempRawPersonale AS TRP
-JOIN
-    TipoMedico AS TM ON TM.Nome = 'medici_indennità_associativa'
-WHERE
-    TRP.medici_indennità_associativa IS NOT NULL AND TRP.medici_indennità_associativa >= 0
-ON DUPLICATE KEY UPDATE
-    Numero = VALUES(Numero);
 
-INSERT INTO Personale (CodAsl, CAP, AnnoR, TipoMedico, Numero)
-SELECT
-    TRP.CodAsl,
-    TRP.CAP,
-    TRP.AnnoR,
-    TM.Id,
-    TRP.totale_scelte
-FROM
-    TempRawPersonale AS TRP
-JOIN
-    TipoMedico AS TM ON TM.Nome = 'totale_scelte'
-WHERE
-    TRP.totale_scelte IS NOT NULL AND TRP.totale_scelte >= 0
-ON DUPLICATE KEY UPDATE
-    Numero = VALUES(Numero);
+-- Inserimento per totale_scelte (Totale scelte per classe di scelte)
+INSERT INTO Personale (CodAsl, CAP, AnnoR, TipoMedico, Quantità)
+SELECT R.codice_asl, R.cap_asl, R.anno_riferimento, TM.id, R.`totale_scelte`
+FROM RawCSVData AS R
+JOIN TipoMedico AS TM ON TM.nome = 'Totale scelte per classe di scelte'
+WHERE R.`totale_scelte` IS NOT NULL AND R.`totale_scelte` != '' AND R.`totale_scelte` REGEXP '^[0-9]+$'
+ON DUPLICATE KEY UPDATE Quantità = VALUES(Quantità);
 
-INSERT INTO Personale (CodAsl, CAP, AnnoR, TipoMedico, Numero)
-SELECT
-    TRP.CodAsl,
-    TRP.CAP,
-    TRP.AnnoR,
-    TM.Id,
-    TRP.pediatri
-FROM
-    TempRawPersonale AS TRP
-JOIN
-    TipoMedico AS TM ON TM.Nome = 'pediatri'
-WHERE
-    TRP.pediatri IS NOT NULL AND TRP.pediatri >= 0
-ON DUPLICATE KEY UPDATE
-    Numero = VALUES(Numero);
 
-INSERT INTO Personale (CodAsl, CAP, AnnoR, TipoMedico, Numero)
-SELECT
-    TRP.CodAsl,
-    TRP.CAP,
-    TRP.AnnoR,
-    TM.Id,
-    TRP.pediatri_indennità_associativa
-FROM
-    TempRawPersonale AS TRP
-JOIN
-    TipoMedico AS TM ON TM.Nome = 'pediatri_indennità_associativa'
-WHERE
-    TRP.pediatri_indennità_associativa IS NOT NULL AND TRP.pediatri_indennità_associativa >= 0
-ON DUPLICATE KEY UPDATE
-    Numero = VALUES(Numero);
+-- Inserimento per pediatri (Pediatri)
+INSERT INTO Personale (CodAsl, CAP, AnnoR, TipoMedico, Quantità)
+SELECT R.codice_asl, R.cap_asl, R.anno_riferimento, TM.id, R.`pediatri`
+FROM RawCSVData AS R
+JOIN TipoMedico AS TM ON TM.nome = 'Pediatri'
+WHERE R.`pediatri` IS NOT NULL AND R.`pediatri` != '' AND R.`pediatri` REGEXP '^[0-9]+$'
+ON DUPLICATE KEY UPDATE Quantità = VALUES(Quantità);
 
-INSERT INTO Personale (CodAsl, CAP, AnnoR, TipoMedico, Numero)
-SELECT
-    TRP.CodAsl,
-    TRP.CAP,
-    TRP.AnnoR,
-    TM.Id,
-    TRP.totale_scelte_dei pediatri
-FROM
-    TempRawPersonale AS TRP
-JOIN
-    TipoMedico AS TM ON TM.Nome = 'totale_scelte_dei pediatri'
-WHERE
-    TRP.totale_scelte_dei pediatri IS NOT NULL AND TRP.totale_scelte_dei pediatri >= 0
-ON DUPLICATE KEY UPDATE
-    Numero = VALUES(Numero);
 
-DROP TEMPORARY TABLE TempRawPersonale;
+-- Inserimento per pediatri_indennità_associativa (Pediatri con indennità per attività in forma associativa)
+INSERT INTO Personale (CodAsl, CAP, AnnoR, TipoMedico, Quantità)
+SELECT R.codice_asl, R.cap_asl, R.anno_riferimento, TM.id, R.`pediatri_indennità_associativa`
+FROM RawCSVData AS R
+JOIN TipoMedico AS TM ON TM.nome = 'Pediatri con indennità per attività in forma associativa'
+WHERE R.`pediatri_indennità_associativa` IS NOT NULL AND R.`pediatri_indennità_associativa` != '' AND R.`pediatri_indennità_associativa` REGEXP '^[0-9]+$'
+ON DUPLICATE KEY UPDATE Quantità = VALUES(Quantità);
+
+
+-- Inserimento per totale_scelte_dei pediatri (Totale scelte per classe di scelte dei pediatri)
+INSERT INTO Personale (CodAsl, CAP, AnnoR, TipoMedico, Quantità)
+SELECT R.codice_asl, R.cap_asl, R.anno_riferimento, TM.id, R.`totale_scelte_dei pediatri`
+FROM RawCSVData AS R
+JOIN TipoMedico AS TM ON TM.nome = 'Totale scelte per classe di scelte dei pediatri'
+WHERE R.`totale_scelte_dei pediatri` IS NOT NULL AND R.`totale_scelte_dei pediatri` != '' AND R.`totale_scelte_dei pediatri` REGEXP '^[0-9]+$'
+ON DUPLICATE KEY UPDATE Quantità = VALUES(Quantità);
 
 -- Popolazione servizi
-CREATE TEMPORARY TABLE TempRawServizi (
-    AnnoR INT NOT NULL,
-    CodAsl INT NOT NULL, 
-    CAP INT NOT NULL,           
-    servizio_trasporto_dialisi INT,
-    servizio_adi INT,
-    unità_mobile_rianimazione INT,
-    ambulanze_emergenza_neonato INT,
-    ADI_casi_trattati INT,
-    ADI_casi_trattati_Anziani INT,
-    ADI_casi_trattati_Pazienti_Terminali INT
-);
-
-LOAD DATA INFILE '/docker-entrypoint-initdb.d/Strutture_e_attività_ASL.csv'
-INTO TABLE TempRawServizi
-FIELDS TERMINATED BY ';'
-ENCLOSED BY '"'
-LINES TERMINATED BY '\n'
-IGNORE 1 ROWS
-(
-    AnnoR,
-    CodAsl,
-    CAP,
-    servizio_trasporto_dialisi
-    servizio_adi
-    unità_mobile_rianimazione
-    ambulanze_emergenza_neonato
-    ADI_casi_trattati
-    ADI_casi_trattati_Anziani
-    ADI_casi_trattati_Pazienti_Terminali
-);
-
+-- Inserimento per servizio_trasporto_dialisi (Servizio Trasporto per Centro Dialisi)
 INSERT INTO Servizi (CodAsl, CAP, AnnoR, TipoServizio, Quantità)
-SELECT
-    TRS.CodAsl,
-    TRS.CAP,
-    TRS.AnnoR,
-    TS.Id,
-    TRS.servizio_trasporto_dialisi
-FROM
-    TempRawServizi AS TRS
-JOIN
-    TipoServizio AS TS ON TS.Nome = 'servizio_trasporto_dialisi'
-WHERE
-    TRS.servizio_trasporto_dialisi IS NOT NULL AND TRS.servizio_trasporto_dialisi >= 0 -- Inserisci solo se la Quantità è valida
-ON DUPLICATE KEY UPDATE
-    Quantità = VALUES(Quantità);
+SELECT R.codice_asl, R.cap_asl, R.anno_riferimento, TS.id, R.`servizio_trasporto_dialisi`
+FROM RawCSVData AS R
+JOIN TipoServizio AS TS ON TS.nome = 'Servizio Trasporto per Centro Dialisi'
+WHERE R.`servizio_trasporto_dialisi` IS NOT NULL AND R.`servizio_trasporto_dialisi` != '' AND R.`servizio_trasporto_dialisi` REGEXP '^[0-9]+$'
+ON DUPLICATE KEY UPDATE Quantità = VALUES(Quantità);
 
+
+-- Inserimento per servizio_adi (Servizio di Assistenza Domiciliare Integrata)
 INSERT INTO Servizi (CodAsl, CAP, AnnoR, TipoServizio, Quantità)
-SELECT
-    TRS.CodAsl,
-    TRS.CAP,
-    TRS.AnnoR,
-    TS.Id,
-    TRS.servizio_adi
-FROM
-    TempRawServizi AS TRS
-JOIN
-    TipoServizio AS TS ON TS.Nome = 'servizio_adi'
-WHERE
-    TRS.servizio_adi IS NOT NULL AND TRS.servizio_adi >= 0
-ON DUPLICATE KEY UPDATE
-    Quantità = VALUES(Quantità);
+SELECT R.codice_asl, R.cap_asl, R.anno_riferimento, TS.id, R.`servizio_adi`
+FROM RawCSVData AS R
+JOIN TipoServizio AS TS ON TS.nome = 'Servizio di Assistenza Domiciliare Integrata'
+WHERE R.`servizio_adi` IS NOT NULL AND R.`servizio_adi` != '' AND R.`servizio_adi` REGEXP '^[0-9]+$'
+ON DUPLICATE KEY UPDATE Quantità = VALUES(Quantità);
 
+
+-- Inserimento per unità_mobile_rianimazione (Unità Mobile di Rianimazione)
 INSERT INTO Servizi (CodAsl, CAP, AnnoR, TipoServizio, Quantità)
-SELECT
-    TRS.CodAsl,
-    TRS.CAP,
-    TRS.AnnoR,
-    TS.Id,
-    TRS.unità_mobile_rianimazione
-FROM
-    TempRawServizi AS TRS
-JOIN
-    TipoServizio AS TS ON TS.Nome = 'unità_mobile_rianimazione'
-WHERE
-    TRS.unità_mobile_rianimazione IS NOT NULL AND TRS.unità_mobile_rianimazione >= 0
-ON DUPLICATE KEY UPDATE
-    Quantità = VALUES(Quantità);
+SELECT R.codice_asl, R.cap_asl, R.anno_riferimento, TS.id, R.`unità_mobile_rianimazione`
+FROM RawCSVData AS R
+JOIN TipoServizio AS TS ON TS.nome = 'Unità Mobile di Rianimazione'
+WHERE R.`unità_mobile_rianimazione` IS NOT NULL AND R.`unità_mobile_rianimazione` != '' AND R.`unità_mobile_rianimazione` REGEXP '^[0-9]+$'
+ON DUPLICATE KEY UPDATE Quantità = VALUES(Quantità);
 
+
+-- Inserimento per ambulanze_emergenza_neonato (Ambulanze Trasporto Emergenza Neonato)
 INSERT INTO Servizi (CodAsl, CAP, AnnoR, TipoServizio, Quantità)
-SELECT
-    TRS.CodAsl,
-    TRS.CAP,
-    TRS.AnnoR,
-    TS.Id,
-    TRS.ambulanze_emergenza_neonato
-FROM
-    TempRawServizi AS TRS
-JOIN
-    TipoServizio AS TS ON TS.Nome = 'ambulanze_emergenza_neonato'
-WHERE
-    TRS.ambulanze_emergenza_neonato IS NOT NULL AND TRS.ambulanze_emergenza_neonato >= 0
-ON DUPLICATE KEY UPDATE
-    Quantità = VALUES(Quantità);
+SELECT R.codice_asl, R.cap_asl, R.anno_riferimento, TS.id, R.`ambulanze_emergenza_neonato`
+FROM RawCSVData AS R
+JOIN TipoServizio AS TS ON TS.nome = 'Ambulanze Trasporto Emergenza Neonato'
+WHERE R.`ambulanze_emergenza_neonato` IS NOT NULL AND R.`ambulanze_emergenza_neonato` != '' AND R.`ambulanze_emergenza_neonato` REGEXP '^[0-9]+$'
+ON DUPLICATE KEY UPDATE Quantità = VALUES(Quantità);
 
+
+-- Inserimento per ADI_casi_trattati (Assistenza Domiciliare Integrata Casi Trattati)
 INSERT INTO Servizi (CodAsl, CAP, AnnoR, TipoServizio, Quantità)
-SELECT
-    TRS.CodAsl,
-    TRS.CAP,
-    TRS.AnnoR,
-    TS.Id,
-    TRS.ADI_casi_trattati
-FROM
-    TempRawServizi AS TRS
-JOIN
-    TipoServizio AS TS ON TS.Nome = 'ADI_casi_trattati'
-WHERE
-    TRS.ADI_casi_trattati IS NOT NULL AND TRS.ADI_casi_trattati >= 0
-ON DUPLICATE KEY UPDATE
-    Quantità = VALUES(Quantità);
+SELECT R.codice_asl, R.cap_asl, R.anno_riferimento, TS.id, R.`ADI_casi_trattati`
+FROM RawCSVData AS R
+JOIN TipoServizio AS TS ON TS.nome = 'Assistenza Domiciliare Integrata Casi Trattati'
+WHERE R.`ADI_casi_trattati` IS NOT NULL AND R.`ADI_casi_trattati` != '' AND R.`ADI_casi_trattati` REGEXP '^[0-9]+$'
+ON DUPLICATE KEY UPDATE Quantità = VALUES(Quantità);
 
+
+-- Inserimento per ADI_casi_trattati_Anziani (Assistenza Domiciliare Integrata Casi Trattati Anziani)
 INSERT INTO Servizi (CodAsl, CAP, AnnoR, TipoServizio, Quantità)
-SELECT
-    TRS.CodAsl,
-    TRS.CAP,
-    TRS.AnnoR,
-    TS.Id,
-    TRS.ADI_casi_trattati_Anziani
-FROM
-    TempRawServizi AS TRS
-JOIN
-    TipoServizio AS TS ON TS.Nome = 'ADI_casi_trattati_Anziani'
-WHERE
-    TRS.ADI_casi_trattati_Anziani IS NOT NULL AND TRS.ADI_casi_trattati_Anziani >= 0
-ON DUPLICATE KEY UPDATE
-    Quantità = VALUES(Quantità);
+SELECT R.codice_asl, R.cap_asl, R.anno_riferimento, TS.id, R.`ADI_casi_trattati_Anziani`
+FROM RawCSVData AS R
+JOIN TipoServizio AS TS ON TS.nome = 'Assistenza Domiciliare Integrata Casi Trattati Anziani'
+WHERE R.`ADI_casi_trattati_Anziani` IS NOT NULL AND R.`ADI_casi_trattati_Anziani` != '' AND R.`ADI_casi_trattati_Anziani` REGEXP '^[0-9]+$'
+ON DUPLICATE KEY UPDATE Quantità = VALUES(Quantità);
 
+
+-- Inserimento per ADI_casi_trattati_Pazienti_Terminali (Assistenza Domiciliare Integrata Casi Trattati Pazienti Terminali)
 INSERT INTO Servizi (CodAsl, CAP, AnnoR, TipoServizio, Quantità)
-SELECT
-    TRS.CodAsl,
-    TRS.CAP,
-    TRS.AnnoR,
-    TS.Id,
-    TRS.ADI_casi_trattati_Pazienti_Terminali
-FROM
-    TempRawServizi AS TRS
-JOIN
-    TipoServizio AS TS ON TS.Nome = 'ADI_casi_trattati_Pazienti_Terminali'
-WHERE
-    TRS.ADI_casi_trattati_Pazienti_Terminali IS NOT NULL AND TRS.ADI_casi_trattati_Pazienti_Terminali >= 0
-ON DUPLICATE KEY UPDATE
-    Quantità = VALUES(Quantità);
+SELECT R.codice_asl, R.cap_asl, R.anno_riferimento, TS.id, R.`ADI_casi_trattati_Pazienti_Terminali`
+FROM RawCSVData AS R
+JOIN TipoServizio AS TS ON TS.nome = 'Assistenza Domiciliare Integrata Casi Trattati Pazienti Terminali'
+WHERE R.`ADI_casi_trattati_Pazienti_Terminali` IS NOT NULL AND R.`ADI_casi_trattati_Pazienti_Terminali` != '' AND R.`ADI_casi_trattati_Pazienti_Terminali` REGEXP '^[0-9]+$'
+ON DUPLICATE KEY UPDATE Quantità = VALUES(Quantità);
 
-DROP TEMPORARY TABLE TempRawServizi;
+-- DROP TEMPORARY TABLE RawCSVData;

@@ -1,1 +1,0 @@
-In questa cartella vanno inseriti i file UML dello schema
