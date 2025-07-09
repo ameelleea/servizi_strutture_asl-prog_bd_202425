@@ -9,4 +9,5 @@ JOIN
 JOIN
     Provincia AS P ON C.SiglaP = P.SiglaP
 WHERE
-    P.SiglaP = 'BO';
+    P.SiglaP = @provincia;
+

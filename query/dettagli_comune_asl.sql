@@ -1,7 +1,7 @@
 SELECT
-    C.Nome AS NomeComune,
+    C.nome AS NomeComune,
     C.CAP,
-    P.Nome AS NomeProvincia,
+    P.nome AS NomeProvincia,
     P.SiglaP,
     R.Nome AS NomeRegione
 FROM
@@ -11,4 +11,4 @@ JOIN
 JOIN
     Regione AS R ON P.CodR = R.CodR
 WHERE
-    C.CAP = 40123; --Esempio, CAP di Bologna 
+    C.CAP = 40124; 

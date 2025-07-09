@@ -168,182 +168,182 @@ INSERT INTO TipoMedico (id, nome) VALUES
 
 -- Popolazione strutture
 -- Inserimento per cup_tipo_1
-INSERT INTO Strutture (CodAsl, CAP, AnnoR, TipoStruttura, Quantità)
+INSERT INTO Strutture (CodAsl, CAP, AnnoR, TipoStruttura, Quantita)
 SELECT R.codice_asl, R.cap_asl, R.anno_riferimento, TS.id, R.cup_tipo_1
 FROM RawCSVData AS R
 JOIN TipoStruttura AS TS ON TS.nome = 'Centro Unificato di Prenotazione Tipo 1'
 WHERE R.cup_tipo_1 IS NOT NULL AND R.cup_tipo_1 != '' AND R.cup_tipo_1 REGEXP '^[0-9]+$'
-ON DUPLICATE KEY UPDATE Quantità = VALUES(Quantità);
+ON DUPLICATE KEY UPDATE Quantita = VALUES(Quantita);
 
 
 -- Inserimento per cup_tipo_2
-INSERT INTO Strutture (CodAsl, CAP, AnnoR, TipoStruttura, Quantità)
+INSERT INTO Strutture (CodAsl, CAP, AnnoR, TipoStruttura, Quantita)
 SELECT R.codice_asl, R.cap_asl, R.anno_riferimento, TS.id, R.cup_tipo_2
 FROM RawCSVData AS R
 JOIN TipoStruttura AS TS ON TS.nome = 'Centro Unificato di Prenotazione Tipo 2'
 WHERE R.cup_tipo_2 IS NOT NULL AND R.cup_tipo_2 != '' AND R.cup_tipo_2 REGEXP '^[0-9]+$'
-ON DUPLICATE KEY UPDATE Quantità = VALUES(Quantità);
+ON DUPLICATE KEY UPDATE Quantita = VALUES(Quantita);
 
 
 -- Inserimento per dipartimento_prevenzione
-INSERT INTO Strutture (CodAsl, CAP, AnnoR, TipoStruttura, Quantità)
+INSERT INTO Strutture (CodAsl, CAP, AnnoR, TipoStruttura, Quantita)
 SELECT R.codice_asl, R.cap_asl, R.anno_riferimento, TS.id, R.dipartimento_prevenzione
 FROM RawCSVData AS R
 JOIN TipoStruttura AS TS ON TS.nome = 'Dipartimento di Prevenzione'
 WHERE R.dipartimento_prevenzione IS NOT NULL AND R.dipartimento_prevenzione != '' AND R.dipartimento_prevenzione REGEXP '^[0-9]+$'
-ON DUPLICATE KEY UPDATE Quantità = VALUES(Quantità);
+ON DUPLICATE KEY UPDATE Quantita = VALUES(Quantita);
 
 
 -- Inserimento per dipartimento_materno_infantile
-INSERT INTO Strutture (CodAsl, CAP, AnnoR, TipoStruttura, Quantità)
+INSERT INTO Strutture (CodAsl, CAP, AnnoR, TipoStruttura, Quantita)
 SELECT R.codice_asl, R.cap_asl, R.anno_riferimento, TS.id, R.dipartimento_materno_infantile
 FROM RawCSVData AS R
 JOIN TipoStruttura AS TS ON TS.nome = 'Dipartimento Materno-Infantile'
 WHERE R.dipartimento_materno_infantile IS NOT NULL AND R.dipartimento_materno_infantile != '' AND R.dipartimento_materno_infantile REGEXP '^[0-9]+$'
-ON DUPLICATE KEY UPDATE Quantità = VALUES(Quantità);
+ON DUPLICATE KEY UPDATE Quantita = VALUES(Quantita);
 
 
 -- Inserimento per dipartimento_salute_mentale
-INSERT INTO Strutture (CodAsl, CAP, AnnoR, TipoStruttura, Quantità)
+INSERT INTO Strutture (CodAsl, CAP, AnnoR, TipoStruttura, Quantita)
 SELECT R.codice_asl, R.cap_asl, R.anno_riferimento, TS.id, R.dipartimento_salute_mentale
 FROM RawCSVData AS R
 JOIN TipoStruttura AS TS ON TS.nome = 'Dipartimento di Salute Mentale'
 WHERE R.dipartimento_salute_mentale IS NOT NULL AND R.dipartimento_salute_mentale != '' AND R.dipartimento_salute_mentale REGEXP '^[0-9]+$'
-ON DUPLICATE KEY UPDATE Quantità = VALUES(Quantità);
+ON DUPLICATE KEY UPDATE Quantita = VALUES(Quantita);
 
 
 -- Inserimento per ambulatori_laboratori
-INSERT INTO Strutture (CodAsl, CAP, AnnoR, TipoStruttura, Quantità)
+INSERT INTO Strutture (CodAsl, CAP, AnnoR, TipoStruttura, Quantita)
 SELECT R.codice_asl, R.cap_asl, R.anno_riferimento, TS.id, R.ambulatori_laboratori
 FROM RawCSVData AS R
 JOIN TipoStruttura AS TS ON TS.nome = 'Ambulatori e Laboratori'
 WHERE R.ambulatori_laboratori IS NOT NULL AND R.ambulatori_laboratori != '' AND R.ambulatori_laboratori REGEXP '^[0-9]+$'
-ON DUPLICATE KEY UPDATE Quantità = VALUES(Quantità);
+ON DUPLICATE KEY UPDATE Quantita = VALUES(Quantita);
 
 
 -- Inserimento per ambulatori_laboratori_convenzionati
-INSERT INTO Strutture (CodAsl, CAP, AnnoR, TipoStruttura, Quantità)
+INSERT INTO Strutture (CodAsl, CAP, AnnoR, TipoStruttura, Quantita)
 SELECT R.codice_asl, R.cap_asl, R.anno_riferimento, TS.id, R.ambulatori_laboratori_convenzionati
 FROM RawCSVData AS R
 JOIN TipoStruttura AS TS ON TS.nome = 'Ambulatori e Laboratori convenzionati'
 WHERE R.ambulatori_laboratori_convenzionati IS NOT NULL AND R.ambulatori_laboratori_convenzionati != '' AND R.ambulatori_laboratori_convenzionati REGEXP '^[0-9]+$'
-ON DUPLICATE KEY UPDATE Quantità = VALUES(Quantità);
+ON DUPLICATE KEY UPDATE Quantita = VALUES(Quantita);
 
 -- Popolazione personale
 -- Inserimento per medici (Medici)
-INSERT INTO Personale (CodAsl, CAP, AnnoR, TipoMedico, Quantità)
+INSERT INTO Personale (CodAsl, CAP, AnnoR, TipoMedico, Quantita)
 SELECT R.codice_asl, R.cap_asl, R.anno_riferimento, TM.id, R.`medici`
 FROM RawCSVData AS R
 JOIN TipoMedico AS TM ON TM.nome = 'Medici'
 WHERE R.`medici` IS NOT NULL AND R.`medici` != '' AND R.`medici` REGEXP '^[0-9]+$'
-ON DUPLICATE KEY UPDATE Quantità = VALUES(Quantità);
+ON DUPLICATE KEY UPDATE Quantita = VALUES(Quantita);
 
 
 -- Inserimento per pedici_indennità_associativa (Medici con indennità per attività in forma associativa)
-INSERT INTO Personale (CodAsl, CAP, AnnoR, TipoMedico, Quantità)
+INSERT INTO Personale (CodAsl, CAP, AnnoR, TipoMedico, Quantita)
 SELECT R.codice_asl, R.cap_asl, R.anno_riferimento, TM.id, R.`pedici_indennità_associativa`
 FROM RawCSVData AS R
 JOIN TipoMedico AS TM ON TM.nome = 'Medici con indennità per attività in forma associativa'
 WHERE R.`pedici_indennità_associativa` IS NOT NULL AND R.`pedici_indennità_associativa` != '' AND R.`pedici_indennità_associativa` REGEXP '^[0-9]+$'
-ON DUPLICATE KEY UPDATE Quantità = VALUES(Quantità);
+ON DUPLICATE KEY UPDATE Quantita = VALUES(Quantita);
 
 
 -- Inserimento per totale_scelte (Totale scelte per classe di scelte)
-INSERT INTO Personale (CodAsl, CAP, AnnoR, TipoMedico, Quantità)
+INSERT INTO Personale (CodAsl, CAP, AnnoR, TipoMedico, Quantita)
 SELECT R.codice_asl, R.cap_asl, R.anno_riferimento, TM.id, R.`totale_scelte`
 FROM RawCSVData AS R
 JOIN TipoMedico AS TM ON TM.nome = 'Totale scelte per classe di scelte'
 WHERE R.`totale_scelte` IS NOT NULL AND R.`totale_scelte` != '' AND R.`totale_scelte` REGEXP '^[0-9]+$'
-ON DUPLICATE KEY UPDATE Quantità = VALUES(Quantità);
+ON DUPLICATE KEY UPDATE Quantita = VALUES(Quantita);
 
 
 -- Inserimento per pediatri (Pediatri)
-INSERT INTO Personale (CodAsl, CAP, AnnoR, TipoMedico, Quantità)
+INSERT INTO Personale (CodAsl, CAP, AnnoR, TipoMedico, Quantita)
 SELECT R.codice_asl, R.cap_asl, R.anno_riferimento, TM.id, R.`pediatri`
 FROM RawCSVData AS R
 JOIN TipoMedico AS TM ON TM.nome = 'Pediatri'
 WHERE R.`pediatri` IS NOT NULL AND R.`pediatri` != '' AND R.`pediatri` REGEXP '^[0-9]+$'
-ON DUPLICATE KEY UPDATE Quantità = VALUES(Quantità);
+ON DUPLICATE KEY UPDATE Quantita = VALUES(Quantita);
 
 
 -- Inserimento per pediatri_indennità_associativa (Pediatri con indennità per attività in forma associativa)
-INSERT INTO Personale (CodAsl, CAP, AnnoR, TipoMedico, Quantità)
+INSERT INTO Personale (CodAsl, CAP, AnnoR, TipoMedico, Quantita)
 SELECT R.codice_asl, R.cap_asl, R.anno_riferimento, TM.id, R.`pediatri_indennità_associativa`
 FROM RawCSVData AS R
 JOIN TipoMedico AS TM ON TM.nome = 'Pediatri con indennità per attività in forma associativa'
 WHERE R.`pediatri_indennità_associativa` IS NOT NULL AND R.`pediatri_indennità_associativa` != '' AND R.`pediatri_indennità_associativa` REGEXP '^[0-9]+$'
-ON DUPLICATE KEY UPDATE Quantità = VALUES(Quantità);
+ON DUPLICATE KEY UPDATE Quantita = VALUES(Quantita);
 
 
 -- Inserimento per totale_scelte_dei pediatri (Totale scelte per classe di scelte dei pediatri)
-INSERT INTO Personale (CodAsl, CAP, AnnoR, TipoMedico, Quantità)
+INSERT INTO Personale (CodAsl, CAP, AnnoR, TipoMedico, Quantita)
 SELECT R.codice_asl, R.cap_asl, R.anno_riferimento, TM.id, R.`totale_scelte_dei pediatri`
 FROM RawCSVData AS R
 JOIN TipoMedico AS TM ON TM.nome = 'Totale scelte per classe di scelte dei pediatri'
 WHERE R.`totale_scelte_dei pediatri` IS NOT NULL AND R.`totale_scelte_dei pediatri` != '' AND R.`totale_scelte_dei pediatri` REGEXP '^[0-9]+$'
-ON DUPLICATE KEY UPDATE Quantità = VALUES(Quantità);
+ON DUPLICATE KEY UPDATE Quantita = VALUES(Quantita);
 
 -- Popolazione servizi
 -- Inserimento per servizio_trasporto_dialisi (Servizio Trasporto per Centro Dialisi)
-INSERT INTO Servizi (CodAsl, CAP, AnnoR, TipoServizio, Quantità)
+INSERT INTO Servizi (CodAsl, CAP, AnnoR, TipoServizio, Quantita)
 SELECT R.codice_asl, R.cap_asl, R.anno_riferimento, TS.id, R.`servizio_trasporto_dialisi`
 FROM RawCSVData AS R
 JOIN TipoServizio AS TS ON TS.nome = 'Servizio Trasporto per Centro Dialisi'
 WHERE R.`servizio_trasporto_dialisi` IS NOT NULL AND R.`servizio_trasporto_dialisi` != '' AND R.`servizio_trasporto_dialisi` REGEXP '^[0-9]+$'
-ON DUPLICATE KEY UPDATE Quantità = VALUES(Quantità);
+ON DUPLICATE KEY UPDATE Quantita = VALUES(Quantita);
 
 
 -- Inserimento per servizio_adi (Servizio di Assistenza Domiciliare Integrata)
-INSERT INTO Servizi (CodAsl, CAP, AnnoR, TipoServizio, Quantità)
+INSERT INTO Servizi (CodAsl, CAP, AnnoR, TipoServizio, Quantita)
 SELECT R.codice_asl, R.cap_asl, R.anno_riferimento, TS.id, R.`servizio_adi`
 FROM RawCSVData AS R
 JOIN TipoServizio AS TS ON TS.nome = 'Servizio di Assistenza Domiciliare Integrata'
 WHERE R.`servizio_adi` IS NOT NULL AND R.`servizio_adi` != '' AND R.`servizio_adi` REGEXP '^[0-9]+$'
-ON DUPLICATE KEY UPDATE Quantità = VALUES(Quantità);
+ON DUPLICATE KEY UPDATE Quantita = VALUES(Quantita);
 
 
 -- Inserimento per unità_mobile_rianimazione (Unità Mobile di Rianimazione)
-INSERT INTO Servizi (CodAsl, CAP, AnnoR, TipoServizio, Quantità)
+INSERT INTO Servizi (CodAsl, CAP, AnnoR, TipoServizio, Quantita)
 SELECT R.codice_asl, R.cap_asl, R.anno_riferimento, TS.id, R.`unità_mobile_rianimazione`
 FROM RawCSVData AS R
 JOIN TipoServizio AS TS ON TS.nome = 'Unità Mobile di Rianimazione'
 WHERE R.`unità_mobile_rianimazione` IS NOT NULL AND R.`unità_mobile_rianimazione` != '' AND R.`unità_mobile_rianimazione` REGEXP '^[0-9]+$'
-ON DUPLICATE KEY UPDATE Quantità = VALUES(Quantità);
+ON DUPLICATE KEY UPDATE Quantita = VALUES(Quantita);
 
 
 -- Inserimento per ambulanze_emergenza_neonato (Ambulanze Trasporto Emergenza Neonato)
-INSERT INTO Servizi (CodAsl, CAP, AnnoR, TipoServizio, Quantità)
+INSERT INTO Servizi (CodAsl, CAP, AnnoR, TipoServizio, Quantita)
 SELECT R.codice_asl, R.cap_asl, R.anno_riferimento, TS.id, R.`ambulanze_emergenza_neonato`
 FROM RawCSVData AS R
 JOIN TipoServizio AS TS ON TS.nome = 'Ambulanze Trasporto Emergenza Neonato'
 WHERE R.`ambulanze_emergenza_neonato` IS NOT NULL AND R.`ambulanze_emergenza_neonato` != '' AND R.`ambulanze_emergenza_neonato` REGEXP '^[0-9]+$'
-ON DUPLICATE KEY UPDATE Quantità = VALUES(Quantità);
+ON DUPLICATE KEY UPDATE Quantita = VALUES(Quantita);
 
 
 -- Inserimento per ADI_casi_trattati (Assistenza Domiciliare Integrata Casi Trattati)
-INSERT INTO Servizi (CodAsl, CAP, AnnoR, TipoServizio, Quantità)
+INSERT INTO Servizi (CodAsl, CAP, AnnoR, TipoServizio, Quantita)
 SELECT R.codice_asl, R.cap_asl, R.anno_riferimento, TS.id, R.`ADI_casi_trattati`
 FROM RawCSVData AS R
 JOIN TipoServizio AS TS ON TS.nome = 'Assistenza Domiciliare Integrata Casi Trattati'
 WHERE R.`ADI_casi_trattati` IS NOT NULL AND R.`ADI_casi_trattati` != '' AND R.`ADI_casi_trattati` REGEXP '^[0-9]+$'
-ON DUPLICATE KEY UPDATE Quantità = VALUES(Quantità);
+ON DUPLICATE KEY UPDATE Quantita = VALUES(Quantita);
 
 
 -- Inserimento per ADI_casi_trattati_Anziani (Assistenza Domiciliare Integrata Casi Trattati Anziani)
-INSERT INTO Servizi (CodAsl, CAP, AnnoR, TipoServizio, Quantità)
+INSERT INTO Servizi (CodAsl, CAP, AnnoR, TipoServizio, Quantita)
 SELECT R.codice_asl, R.cap_asl, R.anno_riferimento, TS.id, R.`ADI_casi_trattati_Anziani`
 FROM RawCSVData AS R
 JOIN TipoServizio AS TS ON TS.nome = 'Assistenza Domiciliare Integrata Casi Trattati Anziani'
 WHERE R.`ADI_casi_trattati_Anziani` IS NOT NULL AND R.`ADI_casi_trattati_Anziani` != '' AND R.`ADI_casi_trattati_Anziani` REGEXP '^[0-9]+$'
-ON DUPLICATE KEY UPDATE Quantità = VALUES(Quantità);
+ON DUPLICATE KEY UPDATE Quantita = VALUES(Quantita);
 
 
 -- Inserimento per ADI_casi_trattati_Pazienti_Terminali (Assistenza Domiciliare Integrata Casi Trattati Pazienti Terminali)
-INSERT INTO Servizi (CodAsl, CAP, AnnoR, TipoServizio, Quantità)
+INSERT INTO Servizi (CodAsl, CAP, AnnoR, TipoServizio, Quantita)
 SELECT R.codice_asl, R.cap_asl, R.anno_riferimento, TS.id, R.`ADI_casi_trattati_Pazienti_Terminali`
 FROM RawCSVData AS R
 JOIN TipoServizio AS TS ON TS.nome = 'Assistenza Domiciliare Integrata Casi Trattati Pazienti Terminali'
 WHERE R.`ADI_casi_trattati_Pazienti_Terminali` IS NOT NULL AND R.`ADI_casi_trattati_Pazienti_Terminali` != '' AND R.`ADI_casi_trattati_Pazienti_Terminali` REGEXP '^[0-9]+$'
-ON DUPLICATE KEY UPDATE Quantità = VALUES(Quantità);
+ON DUPLICATE KEY UPDATE Quantita = VALUES(Quantita);
 
 -- DROP TEMPORARY TABLE RawCSVData;

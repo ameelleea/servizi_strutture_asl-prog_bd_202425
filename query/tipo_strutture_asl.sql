@@ -18,4 +18,5 @@ JOIN
 JOIN
     Regione AS R ON P.CodR = R.CodR
 WHERE
-    TS.Nome = 'DSM' AND R.Nome = 'Emilia-Romagna' AND S.AnnoR = 2022;
+    TS.Nome = 'Dipartimento di Salute Mentale' AND R.Nome LIKE '%lombardia%' AND S.AnnoR = 2022;
+

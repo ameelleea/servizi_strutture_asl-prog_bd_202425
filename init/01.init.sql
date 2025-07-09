@@ -72,7 +72,7 @@ CREATE TABLE IF NOT EXISTS Personale(
     CAP INT,
     AnnoR INT NOT NULL,
     TipoMedico INT NOT NULL,
-    Quantità INT,
+    Quantita INT,
     PRIMARY KEY (CodAsl, CAP, AnnoR, TipoMedico),
     FOREIGN KEY (CodAsl, CAP) REFERENCES ASL(CodAsl, CAP)
         ON DELETE NO ACTION ON UPDATE CASCADE,
@@ -85,7 +85,7 @@ CREATE TABLE IF NOT EXISTS Strutture(
     CAP INT,
     AnnoR INT NOT NULL,
     TipoStruttura INT NOT NULL,
-    Quantità INT,
+    Quantita INT,
     PRIMARY KEY (CodAsl, CAP, AnnoR, TipoStruttura),
     FOREIGN KEY (CodAsl, CAP) REFERENCES ASL(CodAsl, CAP)
         ON DELETE NO ACTION ON UPDATE CASCADE,
@@ -98,7 +98,7 @@ CREATE TABLE IF NOT EXISTS Servizi(
     CAP INT,
     AnnoR INT NOT NULL,
     TipoServizio INT NOT NULL, 
-    Quantità INT,
+    Quantita INT,
     PRIMARY KEY (CodAsl, CAP, AnnoR, TipoServizio),
     FOREIGN KEY (CodAsl, CAP) REFERENCES ASL(CodAsl, CAP)
         ON DELETE NO ACTION ON UPDATE CASCADE, 
